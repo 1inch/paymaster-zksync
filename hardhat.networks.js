@@ -46,8 +46,8 @@ function registerZksync () {
             chainId: 270,
         };
         networks.zksyncTest = {
-            url: "https://testnet.era.zksync.dev",
-            ethNetwork: "goerli",
+            url: 'https://testnet.era.zksync.dev',
+            ethNetwork: 'goerli',
             zksync: true,
         };
         console.log('Network \'zksync\' registered');

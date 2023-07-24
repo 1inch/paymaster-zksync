@@ -19,7 +19,7 @@ module.exports = {
     solidity: {
         compilers: [
             {
-                version: '0.8.20',
+                version: '0.8.19',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -39,7 +39,9 @@ module.exports = {
         enableAllOpcodes: true,
     },
     dependencyCompiler: {
-        paths: [],
+        paths: [
+            '@1inch/solidity-utils/contracts/mocks/TokenMock.sol',
+        ],
     },
     zksolc: {
         version: '1.3.10',
