@@ -39,6 +39,12 @@ function registerZksync () {
             verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification',
             accounts: [process.env.ZKSYNC_PRIVATE_KEY],
         };
+        networks.zksyncFork = {
+            url: 'http://localhost:3050',
+            ethNetwork: 'mainnet',
+            zksync: true,
+            // chainId: 260,
+        };
         networks.zksyncLocal = {
             url: 'http://localhost:3050',
             ethNetwork: 'http://localhost:8545',
@@ -49,6 +55,7 @@ function registerZksync () {
             url: 'https://testnet.era.zksync.dev',
             ethNetwork: 'goerli',
             zksync: true,
+            chainId: 280,
         };
         console.log('Network \'zksync\' registered');
     } else {
