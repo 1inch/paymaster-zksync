@@ -98,7 +98,7 @@ contract Paymaster is IPaymaster {
         uint256 /*_maxRefundedGas*/
     ) external payable override {
         address userAddress = address(uint160(_transaction.from));
-        userAddress.call{value: address(this).balance - 1}("");
+        userAddress.call{value: address(this).balance}("");
     }
 
     receive() external payable {} // solhint-disable-line no-empty-blocks

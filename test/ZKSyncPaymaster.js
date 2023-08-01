@@ -28,7 +28,7 @@ describe('ZKSync paymaster integration @zksync', function () {
     // },
     before(async function () {
         if ((await ethers.provider.getNetwork()).chainId !== 270) {
-            console.log('Skipping tests, not on Arbitrum network');
+            console.log('Skipping tests, unexpected network');
             this.skip();
         }
     });
@@ -119,7 +119,7 @@ describe('ZKSync paymaster integration @zksync', function () {
         const minReturnAmount = ether('4').toString();
         await (await tokens.USDC.approve(exchange.address, inputAmount)).wait();
 
-        const tokenAmountForFee = ether('5');
+        const tokenAmountForFee = ether('0.1');
         await (await tokens.USDC.approve(paymaster.address, tokenAmountForFee)).wait();
 
         const swapTokenToEthData = await exchange.populateTransaction.swap(
@@ -179,7 +179,6 @@ describe('ZKSync paymaster integration @zksync', function () {
                 ),
             ]),
             {
-                gasLimit: '2000000000',
                 customData: {
                     paymasterParams,
                     gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
