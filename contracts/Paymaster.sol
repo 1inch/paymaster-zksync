@@ -8,13 +8,12 @@ import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 import "./mocks/interfaces/IZksyncWETH.sol";
 
 contract Paymaster is IPaymaster {
-    error NotEnoughAllownace();
     error InvalidSender();
     error FailedTransferFrom();
-    error InvalidToken();
     error BootloaderTransferFailed();
     error UnsupportedFlow();
     error InvalidInputLength();
+    error DebugError();
 
     address immutable public bootloader;
     address immutable public exchange;
@@ -68,6 +67,7 @@ contract Paymaster is IPaymaster {
             // in production zksync-era-mainnet it is not true, and we can remove withdraw method and use data for swap token to eth
             IERC20(token).approve(exchange, amount);
             (bool success, bytes memory result) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
+            // revert(uintToString(IERC20(token).balanceOf(thisAddress)));
             if (!success) {
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
                     let ptr := mload(0x40)
@@ -75,11 +75,6 @@ contract Paymaster is IPaymaster {
                     revert(ptr, returndatasize())
                 }
             }
-            uint256 wethAmount = 0;
-            assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
-                wethAmount := mload(add(result, 32))
-            }
-            weth.withdraw(uint256(wethAmount));
 
             // The bootloader never returns any data, so it can safely be ignored here.
             (success, ) = payable(bootloader).call{value: requiredETH}("");
@@ -87,6 +82,24 @@ contract Paymaster is IPaymaster {
         } else {
             revert("UnsupportedFlow");
         }
+    }
+
+    function uintToString(uint256 v) public pure returns (string memory) {
+        if (v == 0) {
+            return "0";
+        }
+        uint256 j = v;
+        uint256 len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        while (v != 0) {
+            bstr[--len] = bytes1(uint8(48 + v % 10));
+            v /= 10;
+        }
+        return string(bstr);
     }
 
     function postTransaction(
@@ -98,7 +111,7 @@ contract Paymaster is IPaymaster {
         uint256 /*_maxRefundedGas*/
     ) external payable override {
         address userAddress = address(uint160(_transaction.from));
-        userAddress.call{value: address(this).balance - 1}("");
+        userAddress.call{value: address(this).balance}("");
     }
 
     receive() external payable {} // solhint-disable-line no-empty-blocks

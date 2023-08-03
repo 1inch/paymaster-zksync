@@ -177,22 +177,57 @@ function buildCalldataDescription ({
     return '0x' + flags.toString(16).padStart(4, '0') + hexBytes + trimmedData;
 }
 
-function generateUniswapV2PatchableCalldata (executor, pair, srcToken, dstToken, minReturn, destination, doTransfer = true, broken = false) {
-    const hasDestination = BigInt(destination) !== 0n && destination.toLowerCase() !== executor.address.toLowerCase();
+function generateEthBalanceOfPatchableCalldata (executor, account) {
+    const postData = (account.toLowerCase() !== executor.address.toLowerCase() ? BigInt(account).toString(16).padStart(40, '0') : '');
+
+    return buildCalldataDescription({
+        offset: 0,
+        data: executor.interface.encodeFunctionData('ethBalanceOf') + postData,
+    });
+}
+
+function generateSolidlyPatchableCalldata ({
+    executor,
+    pair,
+    srcToken,
+    dstToken,
+    minReturn,
+    destination,
+    hasBalanceOf = false,
+    fee,
+    isStable,
+    decimals0Exp = 18,
+    decimals1Exp = 18,
+    doTransfer = true,
+}) {
+    const hasDestination = destination !== undefined && destination.toLowerCase() !== executor.address.toLowerCase();
     const hasMinReturn = BigInt(minReturn) !== 0n;
+    /**
+     * flags layout:
+     * 1st bit: zeroForOne
+     * 2nd bit: hasDestinationFlag
+     * 3rd bit: hasMinReturnFlag
+     * 4th bit: isStableFlag
+     * 5th bit: hasBalanceOfFlag
+     * 6th bit: empty
+     * 7th bit: empty
+     * 8th bit: empty
+    */
     const postData =
         (
-            // (1n << 3n) | // balanceOf
-            ((hasMinReturn ? 1n : 0n) << 4n) |
-            ((hasDestination ? 1n : 0n) << 5n) |
-            ((broken ? 1n : 0n) << 6n) |
-            ((srcToken.toLowerCase() < dstToken.toLowerCase() ? 1n : 0n) << 7n)
+            ((hasBalanceOf ? 1n : 0n) << 3n) |
+            ((isStable ? 1n : 0n) << 4n) |
+            ((hasMinReturn ? 1n : 0n) << 5n) |
+            ((hasDestination ? 1n : 0n) << 6n) |
+            ((srcToken.toLowerCase() < dstToken.toLowerCase() ? 1n : 0n) << 7n) // zeroForOneE
         ).toString(16).padStart(2, '0') +
-        BigInt(3).toString(16).padStart(8, '0') +
+        BigInt(fee).toString(16).padStart(8, '0') +
         BigInt(pair).toString(16).padStart(40, '0') +
         (hasDestination ? BigInt(destination).toString(16).padStart(40, '0') : '') +
-        (hasMinReturn ? BigInt(minReturn).toString(16).padStart(64, '0') : '');
-        // BigInt(srcToken).toString(16).padStart(40, '0'); // For balanceOf
+        (hasMinReturn ? BigInt(minReturn).toString(16).padStart(64, '0') : '') +
+        (isStable ? BigInt(decimals0Exp).toString(16).padStart(2, '0') : '') + // decimals0Exp, if isStableFlag == 1. Maximum value is 18, so we need 1 byte
+        (isStable ? BigInt(decimals1Exp).toString(16).padStart(2, '0') : '') + // decimals1Exp, if isStableFlag == 1 Maximum value is 18, so we need 1 byte
+        (hasBalanceOf ? BigInt(srcToken).toString(16).padStart(40, '0') : ''); // srcToken if hasBalanceOfFlag == 1
 
     return buildCalldataDescription({
         offset: -1,
@@ -202,7 +237,23 @@ function generateUniswapV2PatchableCalldata (executor, pair, srcToken, dstToken,
                 spender: pair,
             }
             : undefined,
-        data: executor.interface.encodeFunctionData('swapUniV2') + postData,
+        data: executor.interface.encodeFunctionData('swapSolidly') + postData,
+    });
+}
+
+function generateWethWithdrawPatchableCalldata (weth) {
+    return buildCalldataDescription({
+        offset: 4,
+        target: weth.address,
+        data: weth.interface.encodeFunctionData('withdraw', ['0']).substring(0, 10),
+    });
+}
+
+function generateEthTransferPatchableCalldata (target) {
+    return buildCalldataDescription({
+        target,
+        offset: 0,
+        patchValue: true,
     });
 }
 
@@ -210,5 +261,8 @@ module.exports = {
     buildFlags,
     buildSwapDescription,
     buildBytesForExecutor,
-    generateUniswapV2PatchableCalldata,
+    generateEthBalanceOfPatchableCalldata,
+    generateEthTransferPatchableCalldata,
+    generateSolidlyPatchableCalldata,
+    generateWethWithdrawPatchableCalldata
 };

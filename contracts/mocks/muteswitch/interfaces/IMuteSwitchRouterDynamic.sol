@@ -103,4 +103,5 @@ interface IMuteSwitchRouterDynamic {
     function getAmountsOutExpanded(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts, bool[] memory stable, uint[] memory fees);
     function getAmountsOut(uint amountIn, address[] calldata path, bool[] calldata stable) external view returns (uint[] memory amounts, bool[] memory _stable, uint[] memory fees);
     function getPairInfo(address[] calldata path, bool stable) external view returns(address tokenA, address tokenB, address pair, uint reserveA, uint reserveB, uint fee);
+    function pairFor(address tokenA, address tokenB, bool stable) external view returns(address pair);
 }
