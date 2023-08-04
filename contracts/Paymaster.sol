@@ -66,7 +66,7 @@ contract Paymaster is IPaymaster {
             // we swap token to weth and then withdraw to eth, because UniERC20's uniTransfer() method has too small gas limit 5000
             // in production zksync-era-mainnet it is not true, and we can remove withdraw method and use data for swap token to eth
             IERC20(token).approve(exchange, amount);
-            (bool success, bytes memory result) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
+            (bool success,) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
             // revert(uintToString(IERC20(token).balanceOf(thisAddress)));
             if (!success) {
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
@@ -82,24 +82,6 @@ contract Paymaster is IPaymaster {
         } else {
             revert("UnsupportedFlow");
         }
-    }
-
-    function uintToString(uint256 v) public pure returns (string memory) {
-        if (v == 0) {
-            return "0";
-        }
-        uint256 j = v;
-        uint256 len;
-        while (j != 0) {
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        while (v != 0) {
-            bstr[--len] = bytes1(uint8(48 + v % 10));
-            v /= 10;
-        }
-        return string(bstr);
     }
 
     function postTransaction(

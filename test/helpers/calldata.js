@@ -186,6 +186,14 @@ function generateEthBalanceOfPatchableCalldata (executor, account) {
     });
 }
 
+function generateEthTransferPatchableCalldata (target) {
+    return buildCalldataDescription({
+        target,
+        offset: 0,
+        patchValue: true,
+    });
+}
+
 function generateSolidlyPatchableCalldata ({
     executor,
     pair,
@@ -249,14 +257,6 @@ function generateWethWithdrawPatchableCalldata (weth) {
     });
 }
 
-function generateEthTransferPatchableCalldata (target) {
-    return buildCalldataDescription({
-        target,
-        offset: 0,
-        patchValue: true,
-    });
-}
-
 module.exports = {
     buildFlags,
     buildSwapDescription,
@@ -264,5 +264,5 @@ module.exports = {
     generateEthBalanceOfPatchableCalldata,
     generateEthTransferPatchableCalldata,
     generateSolidlyPatchableCalldata,
-    generateWethWithdrawPatchableCalldata
+    generateWethWithdrawPatchableCalldata,
 };

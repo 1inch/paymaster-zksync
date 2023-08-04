@@ -9,29 +9,20 @@ const {
     buildFlags,
     buildBytesForExecutor,
     buildSwapDescription,
-    generateUniswapV2PatchableCalldata,
-    generateTokenTransferPatchableCalldata,
     generateWethWithdrawPatchableCalldata,
     generateEthBalanceOfPatchableCalldata,
     generateEthTransferPatchableCalldata,
     generateSolidlyPatchableCalldata,
 } = require('./helpers/calldata.js');
 
-const e6 = (value) => ether(value) / BigInt('1000000000000')
+const e6 = (value) => ether(value) / BigInt('1000000000000');
 const BOOTLOADER_FORMAL_ADDR = '0x0000000000000000000000000000000000008001';
 
 describe('ZKSync paymaster integration @zksync', function () {
-    // For these tests you should start your own local zksync node:
-    //      $ git clone https://github.com/matter-labs/local-setup.git
-    //      $ cd local-setup
-    //      $ ./start.sh
-    // Use one of these rich wallets with some ETH on it in process.env.ZKSYNC_PRIVATE_KEY:
-    //      https://github.com/matter-labs/local-setup/blob/main/rich-wallets.json
-    // For example:
-    // {
-    //     "address": "0x36615Cf349d7F6344891B1e7CA7C72883F5dc049",
-    //     "privateKey": "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110"
-    // },
+    // For these tests you should start your own zksync fork node:
+    // https://github.com/matter-labs/era-test-node
+    // Use one of rich wallets with some ETH on it in process.env.ZKSYNC_PRIVATE_KEY. You can find them in era-test-node logs.
+    // You shoould use port 3050, because it is hardcoded in zksync lib: era_test_node --port 3050 fork mainnet
     before(async function () {
         if ((await Provider.getDefaultProvider().getNetwork()).chainId !== 260) {
             console.log('Skipping tests, unexpected network');
@@ -65,7 +56,7 @@ describe('ZKSync paymaster integration @zksync', function () {
         const contracts = {
             exchange: new ethers.Contract('0x6e2B76966cbD9cF4cC2Fa0D76d24d5241E0ABC2F', AggregationRouter.abi, provider),
             solidlyRouter: new ethers.Contract('0x8B791913eB07C32779a16750e3868aA8495F5964', IMuteSwitchRouterDynamic.abi, provider),
-            solidlyWethUsdc: new ethers.Contract('0x2C0737AAf530714067396131Ee9BE9cee4cf09A0', IMuteSwitchPairDynamic.abi, provider), // 0xDFAaB828f5F515E104BaaBa4d8D554DA9096f0e4
+            solidlyWethUsdc: new ethers.Contract('0xDFAaB828f5F515E104BaaBa4d8D554DA9096f0e4', IMuteSwitchPairDynamic.abi, provider), // 0x2C0737AAf530714067396131Ee9BE9cee4cf09A0
         };
         const executor = await deployer.deploy(
             Executor, [constants.ZERO_ADDRESS, constants.ZERO_ADDRESS, contracts.exchange.address],
@@ -95,11 +86,9 @@ describe('ZKSync paymaster integration @zksync', function () {
         const { wallet, tokens, contracts } = await initContracts();
 
         // build swap token to ETH calldata for fee payment in paymaster
-        const tokenAmountForFee = e6('1000');
+        const tokenAmountForFee = e6('400');
         await (await tokens.USDC.connect(wallet).approve(contracts.paymaster.address, tokenAmountForFee)).wait();
 
-
-        console.log("stable", await contracts.solidlyWethUsdc.stable());
         const swapTokenToEth = await contracts.exchange.populateTransaction.swap(
             contracts.executor.address,
             buildSwapDescription(
@@ -119,7 +108,7 @@ describe('ZKSync paymaster integration @zksync', function () {
                     dstToken: tokens.WETH.address,
                     minReturn: '0',
                     destination: contracts.executor.address,
-                    fee: await contracts.solidlyWethUsdc.pairFee(),
+                    fee: (await contracts.solidlyWethUsdc.pairFee()) * 100,
                     isStable: (await contracts.solidlyWethUsdc.stable()),
                     decimals0Exp: 6,
                     decimals1Exp: 18,
@@ -156,6 +145,7 @@ describe('ZKSync paymaster integration @zksync', function () {
         );
 
         // execute main operation and check result
+        const receivedFeeETH = await contracts.solidlyWethUsdc.getAmountOut(tokenAmountForFee, tokens.USDC.address);
         const walletEthBalanceBefore = await wallet.provider.getBalance(wallet.address);
         const walletUsdcBalanceBefore = await tokens.USDC.balanceOf(wallet.address);
         const paymasterEthBalanceBefore = await wallet.provider.getBalance(contracts.paymaster.address);
@@ -170,8 +160,6 @@ describe('ZKSync paymaster integration @zksync', function () {
         const paymasterUsdcBalanceAfter = await tokens.USDC.balanceOf(contracts.paymaster.address);
         const randomReceiverUSDCBalanceAfter = await tokens.USDC.balanceOf(randomReceiver.address);
 
-        // console.log(`Swap ${-BigInt(received) - BigInt(tokenAmountForFee.toString())} USDC from wallet, inputAmount: ${inputAmount.toString()}, minReturnAmount: ${minReturnAmount.toString()}`);
-        // console.log(`And transfer ${tokenAmountForFee.toString()} USDC to Paymaster for fee`);
         console.table({
             'Wallet USDC balance': { Before: walletUsdcBalanceBefore.toString(), After: walletUsdcBalanceAfter.toString() },
             'Wallet ETH balance': { Before: walletEthBalanceBefore.toString(), After: walletEthBalanceAfter.toString() },
@@ -179,15 +167,12 @@ describe('ZKSync paymaster integration @zksync', function () {
             'Paymaster USDC balance': { Before: paymasterUsdcBalanceBefore.toString(), After: paymasterUsdcBalanceAfter.toString() },
             'Random receiver USDC balance': { Before: randomReceiverUSDCBalanceBefore.toString(), After: randomReceiverUSDCBalanceAfter.toString() },
         });
-        console.log(await tokens.USDC.balanceOf(randomReceiver.address))
+        console.log(`Spent ${-BigInt(received)} USDC: ${inputAmount.toString()} USDC for transfer and ${tokenAmountForFee.toString()} USDC for fee`);
 
-        // expect(walletUsdcBalanceAfter.add(tokenAmountForFee).add(inputAmount)).to.be.gt(walletUsdcBalanceBefore);
-        // expect(walletDaiBalanceAfter).to.be.gt(walletDaiBalanceBefore);
-        // expect(walletEthBalanceAfter).to.be.gt(walletEthBalanceBefore);
-        // expect(walletEthBalanceAfter).to.be.lt(walletEthBalanceBefore.add(tokenAmountForFee));
-
-        // expect(paymasterEthBalanceAfter).to.be.gte(paymasterEthBalanceBefore);
-        // expect(paymasterUsdcBalanceAfter).to.be.eq(paymasterUsdcBalanceBefore);
-        // expect(paymasterWethBalanceAfter).to.be.eq(paymasterWethBalanceBefore);
+        expect(walletUsdcBalanceAfter.add(tokenAmountForFee).add(inputAmount)).to.be.eq(walletUsdcBalanceBefore);
+        expect(walletEthBalanceAfter).to.be.gt(walletEthBalanceBefore);
+        expect(paymasterEthBalanceAfter.mul(10)).to.be.lt(receivedFeeETH);
+        expect(paymasterUsdcBalanceAfter).to.be.eq(paymasterUsdcBalanceBefore);
+        expect(randomReceiverUSDCBalanceAfter).to.be.eq(randomReceiverUSDCBalanceBefore.add(inputAmount));
     });
 });
