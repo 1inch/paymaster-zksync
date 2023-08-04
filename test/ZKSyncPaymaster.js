@@ -63,7 +63,7 @@ describe('ZKSync paymaster integration @zksync', function () {
             { gasLimit: '2000000000' },
         );
         const paymaster = await deployer.deploy(
-            Paymaster, [BOOTLOADER_FORMAL_ADDR, contracts.exchange.address, tokens.WETH.address],
+            Paymaster, [BOOTLOADER_FORMAL_ADDR, contracts.exchange.address],
             { gasLimit: '2000000000' },
         );
         contracts.executor = executor;

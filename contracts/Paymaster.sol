@@ -5,7 +5,6 @@ import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymaster.s
 import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymasterFlow.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/libraries/TransactionHelper.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
-import "./mocks/interfaces/IZksyncWETH.sol";
 
 contract Paymaster is IPaymaster {
     error InvalidSender();
@@ -17,12 +16,10 @@ contract Paymaster is IPaymaster {
 
     address immutable public bootloader;
     address immutable public exchange;
-    IZksyncWETH immutable public weth;
 
-    constructor(address bootloader_, address exchange_, IZksyncWETH weth_) {
+    constructor(address bootloader_, address exchange_) {
         bootloader = bootloader_;
         exchange = exchange_;
-        weth = weth_;
     }
 
     function validateAndPayForPaymasterTransaction(
