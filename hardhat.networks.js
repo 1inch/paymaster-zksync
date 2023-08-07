@@ -43,7 +43,7 @@ function registerZksync () {
             url: 'http://localhost:3050',
             ethNetwork: 'mainnet',
             zksync: true,
-            // chainId: 260,
+            chainId: 260,
         };
         networks.zksyncLocal = {
             url: 'http://localhost:3050',
