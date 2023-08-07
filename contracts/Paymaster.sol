@@ -6,22 +6,42 @@ import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymasterFl
 import "@matterlabs/zksync-contracts/l2/system-contracts/libraries/TransactionHelper.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 
+/**
+ * @title Paymaster
+ * @dev This contract is an implementation of the IPaymaster interface that enables paying transaction fees with any tokens using 1inch.
+ */
 contract Paymaster is IPaymaster {
     error InvalidSender();
     error FailedTransferFrom();
     error BootloaderTransferFailed();
     error UnsupportedFlow();
     error InvalidInputLength();
-    error DebugError();
 
+    /**
+     * @notice The address of the bootloader contract.
+     */
     address immutable public bootloader;
+
+    /**
+     * @notice The address of the 1inch AggregationRouter contract.
+     */
     address immutable public exchange;
 
+    /**
+     * @param bootloader_ The address of the bootloader contract.
+     * @param exchange_ The address of the 1inch AggregationRouter contract.
+     */
     constructor(address bootloader_, address exchange_) {
         bootloader = bootloader_;
         exchange = exchange_;
     }
 
+    /**
+     * @notice Validates, swaps tokens for ETH to pay gas fees using 1inch and pays for the transaction.
+     * @dev It checks the validity of the transaction, decodes the paymasterInput to extract token details and make a token swap on 1inch.
+     * @param _transaction The transaction object including the token details and 1inch exchange data.
+     * @return magic Returns PAYMASTER_VALIDATION_SUCCESS_MAGIC if successful.
+     */
     function validateAndPayForPaymasterTransaction(
         bytes32,
         bytes32,
@@ -75,6 +95,10 @@ contract Paymaster is IPaymaster {
         }
     }
 
+    /**
+     * @notice Transfers the remaining ETH balance of the Paymaster back to the user after a transaction has been executed.
+     * @param _transaction The transaction object.
+     */
     function postTransaction(
         bytes calldata /*_context*/,
         Transaction calldata _transaction,
@@ -87,5 +111,8 @@ contract Paymaster is IPaymaster {
         userAddress.call{value: address(this).balance}("");
     }
 
+    /**
+     * @notice Allows the contract to accept incoming Ether.
+     */
     receive() external payable {} // solhint-disable-line no-empty-blocks
 }
