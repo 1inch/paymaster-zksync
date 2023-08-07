@@ -48,23 +48,17 @@ contract Paymaster is IPaymaster {
                 magic = bytes4(0);
             }
 
-            // Note, that while the minimal amount of ETH needed is tx.gasPrice * tx.gasLimit,
-            // neither paymaster nor account are allowed to access this context variable.
             uint256 requiredETH = _transaction.gasLimit * _transaction.maxFeePerGas;
             try IERC20(token).transferFrom(userAddress, thisAddress, amount) {} catch (bytes memory revertReason) { // solhint-disable-line no-empty-blocks
-                // If the revert reason is empty or represented by just a function selector,
-                // we replace the error with a more user-friendly message
+                // If the revert reason is empty or represented by just a function selector, we replace the error with a more user-friendly message
                 require(revertReason.length > 4, "FailedTransferFrom");
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
                     revert(add(0x20, revertReason), mload(revertReason))
                 }
             }
 
-            // we swap token to weth and then withdraw to eth, because UniERC20's uniTransfer() method has too small gas limit 5000
-            // in production zksync-era-mainnet it is not true, and we can remove withdraw method and use data for swap token to eth
             IERC20(token).approve(exchange, amount);
             (bool success,) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
-            // revert(uintToString(IERC20(token).balanceOf(thisAddress)));
             if (!success) {
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
                     let ptr := mload(0x40)
@@ -74,7 +68,7 @@ contract Paymaster is IPaymaster {
             }
 
             // The bootloader never returns any data, so it can safely be ignored here.
-            (success, ) = payable(bootloader).call{value: requiredETH}("");
+            (success,) = payable(bootloader).call{value: requiredETH}("");
             require(success, "BootloaderTransferFailed");
         } else {
             revert("UnsupportedFlow");
