@@ -2,12 +2,11 @@ require('@matterlabs/hardhat-zksync-deploy');
 require('@matterlabs/hardhat-zksync-solc');
 require('@matterlabs/hardhat-zksync-verify');
 require('@nomiclabs/hardhat-ethers');
-require('@nomiclabs/hardhat-etherscan');
 require('@nomicfoundation/hardhat-chai-matchers');
 require('dotenv').config();
 require('hardhat-dependency-compiler');
 require('hardhat-deploy');
-require('hardhat-gas-reporter');
+// require('hardhat-gas-reporter');
 require('hardhat-tracer');
 require('solidity-coverage');
 
@@ -19,7 +18,7 @@ module.exports = {
     solidity: {
         compilers: [
             {
-                version: '0.8.19',
+                version: '0.8.20',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -35,16 +34,20 @@ module.exports = {
             default: 0,
         },
     },
+    mocha: {
+        timeout: 360000,
+    },
     tracer: {
         enableAllOpcodes: true,
     },
     dependencyCompiler: {
         paths: [
+            '@1inch/solidity-utils/contracts/interfaces/IWETH.sol',
             '@1inch/solidity-utils/contracts/mocks/TokenMock.sol',
         ],
     },
     zksolc: {
-        version: '1.3.10',
+        version: '1.3.13',
         compilerSource: 'binary',
         settings: {
             optimizer: {

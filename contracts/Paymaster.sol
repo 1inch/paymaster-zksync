@@ -1,31 +1,47 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymaster.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IPaymasterFlow.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/libraries/TransactionHelper.sol";
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
-import "./mocks/interfaces/IZksyncWETH.sol";
 
+/**
+ * @title Paymaster
+ * @dev This contract is an implementation of the IPaymaster interface that enables paying transaction fees with any tokens using 1inch.
+ */
 contract Paymaster is IPaymaster {
-    error NotEnoughAllownace();
     error InvalidSender();
     error FailedTransferFrom();
-    error InvalidToken();
     error BootloaderTransferFailed();
     error UnsupportedFlow();
     error InvalidInputLength();
 
+    /**
+     * @notice The address of the bootloader contract.
+     */
     address immutable public bootloader;
-    address immutable public exchange;
-    IZksyncWETH immutable public weth;
 
-    constructor(address bootloader_, address exchange_, IZksyncWETH weth_) {
+    /**
+     * @notice The address of the 1inch AggregationRouter contract.
+     */
+    address immutable public exchange;
+
+    /**
+     * @param bootloader_ The address of the bootloader contract.
+     * @param exchange_ The address of the 1inch AggregationRouter contract.
+     */
+    constructor(address bootloader_, address exchange_) {
         bootloader = bootloader_;
         exchange = exchange_;
-        weth = weth_;
     }
 
+    /**
+     * @notice Validates, swaps tokens for ETH to pay gas fees using 1inch and pays for the transaction.
+     * @dev It checks the validity of the transaction, decodes the paymasterInput to extract token details and make a token swap on 1inch.
+     * @param _transaction The transaction object including the token details and 1inch exchange data.
+     * @return magic Returns PAYMASTER_VALIDATION_SUCCESS_MAGIC if successful.
+     */
     function validateAndPayForPaymasterTransaction(
         bytes32,
         bytes32,
@@ -52,22 +68,17 @@ contract Paymaster is IPaymaster {
                 magic = bytes4(0);
             }
 
-            // Note, that while the minimal amount of ETH needed is tx.gasPrice * tx.gasLimit,
-            // neither paymaster nor account are allowed to access this context variable.
             uint256 requiredETH = _transaction.gasLimit * _transaction.maxFeePerGas;
             try IERC20(token).transferFrom(userAddress, thisAddress, amount) {} catch (bytes memory revertReason) { // solhint-disable-line no-empty-blocks
-                // If the revert reason is empty or represented by just a function selector,
-                // we replace the error with a more user-friendly message
+                // If the revert reason is empty or represented by just a function selector, we replace the error with a more user-friendly message
                 require(revertReason.length > 4, "FailedTransferFrom");
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
                     revert(add(0x20, revertReason), mload(revertReason))
                 }
             }
 
-            // we swap token to weth and then withdraw to eth, because UniERC20's uniTransfer() method has too small gas limit 5000
-            // in production zksync-era-mainnet it is not true, and we can remove withdraw method and use data for swap token to eth
             IERC20(token).approve(exchange, amount);
-            (bool success, bytes memory result) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
+            (bool success,) = exchange.call(data); // solhint-disable-line avoid-low-level-calls
             if (!success) {
                 assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
                     let ptr := mload(0x40)
@@ -75,20 +86,19 @@ contract Paymaster is IPaymaster {
                     revert(ptr, returndatasize())
                 }
             }
-            uint256 wethAmount = 0;
-            assembly ("memory-safe") {  // solhint-disable-line no-inline-assembly
-                wethAmount := mload(add(result, 32))
-            }
-            weth.withdraw(uint256(wethAmount));
 
             // The bootloader never returns any data, so it can safely be ignored here.
-            (success, ) = payable(bootloader).call{value: requiredETH}("");
+            (success,) = payable(bootloader).call{value: requiredETH}("");
             require(success, "BootloaderTransferFailed");
         } else {
             revert("UnsupportedFlow");
         }
     }
 
+    /**
+     * @notice Transfers the remaining ETH balance of the Paymaster back to the user after a transaction has been executed.
+     * @param _transaction The transaction object.
+     */
     function postTransaction(
         bytes calldata /*_context*/,
         Transaction calldata _transaction,
@@ -101,5 +111,8 @@ contract Paymaster is IPaymaster {
         userAddress.call{value: address(this).balance}("");
     }
 
+    /**
+     * @notice Allows the contract to accept incoming Ether.
+     */
     receive() external payable {} // solhint-disable-line no-empty-blocks
 }
