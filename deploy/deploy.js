@@ -1,5 +1,6 @@
 const hre = require('hardhat');
-const { getChainId, ethers } = hre;
+const { getChainId } = hre;
+const { deployAndGetContract } = require('@1inch/solidity-utils');
 
 module.exports = async ({ deployments, getNamedAccounts }) => {
     const networkName = hre.network.name;
@@ -12,33 +13,14 @@ module.exports = async ({ deployments, getNamedAccounts }) => {
         return;
     }
 
-    const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const constructorArgs = [];
-    const contractName = 'Example';
-    const deploymentName = 'ExampleDeployment';
-    const exampleDeployment = await deploy(deploymentName, {
-        args: constructorArgs,
-        from: deployer,
-        contract: contractName,
-        skipIfAlreadyDeployed: true,
+    await deployAndGetContract({
+        contractName: 'Paymaster',
+        constructorArgs: ['0x0000000000000000000000000000000000008001', '0x6e2B76966cbD9cF4cC2Fa0D76d24d5241E0ABC2F'],
+        deployments,
+        deployer,
     });
-
-    console.log(`${deploymentName} deployed to: ${contract.address}`);
-
-    if (chainId !== '31337') {
-        await hre.run('verify:verify', {
-            address: exampleDeployment.address,
-            constructorArguments: constructorArgs,
-        });
-    }
-
-    const Example = await ethers.getContractFactory('Example');
-    const example = Example.attach(exampleDeployment.address);
-
-    const txn = await example.func('1234');
-    await txn;
 };
 
 module.exports.skip = async () => true;
