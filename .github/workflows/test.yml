@@ -27,7 +27,7 @@ jobs:
           era_test_node --port 3050 fork mainnet &
           echo "SCRIPT_PID=$!" >> $GITHUB_ENV  # save process PID
 
-      - run: yarn test:ci
+      - run: yarn test:fork
         env:
           ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
 
