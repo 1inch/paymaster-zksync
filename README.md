@@ -17,8 +17,6 @@ Paymaster - this is a contract designed to pay transaction fees using any tokens
 
 This repository is designed for demonstration and test purposes and is optimized for use within a ZkSync mainnet fork. However, its applications are not limited to this context.
 
-## Testing
-
 1. Before you begin, you must be connected to the correct zksync fork node. Detailed instructions can be found at [ZKSync Era Test Node](https://github.com/matter-labs/era-test-node).
 2. Your zksync fork node shoould use port 3050, because it is hardcoded in zksync lib:
    ```
@@ -29,10 +27,13 @@ This repository is designed for demonstration and test purposes and is optimized
    # Example of .env file in this repo
    ZKSYNC_PRIVATE_KEY=7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110
    ```
-4. **Test Execution:** 
-   ```
-   yarn && yarn test:fork
-   ```
+
+## Testing
+
+**Test Execution:** 
+```
+yarn && yarn test:fork
+```
    
 **Main Operations:**
 - The test will initialize contracts like `Paymaster`, `AggregationRouter` and various token contracts.
