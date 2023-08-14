@@ -3,41 +3,45 @@
 [![Build Status](https://github.com/1inch/paymaster-zksync/workflows/CI/badge.svg)](https://github.com/1inch/paymaster-zksync/actions)
 [![Coverage Status](https://codecov.io/gh/1inch/paymaster-zksync/branch/master/graph/badge.svg?token=JA2Z2CABZZ)](https://codecov.io/gh/1inch/paymaster-zksync)
 
+Paymaster - this is a contract designed to pay transaction fees using any tokens through the 1inch. This allows users to pay fees not only in ETH, but also in other tokens, making an automatic exchange for the required amount of ETH in 1inch. This provides more flexible and convenient payment mechanisms for users.
 
-This repository provides implementation of ZKSync Paymaster, which designed to allow transaction fees to be paid using custom tokens, by leveraging the 1inch Aggregation Protocol, and tests which show example to use it. 
+## Contract Overview
 
-## Setup
-To run these tests, you need to follow these steps:
+- **Purpose**: The contract serves to allow users to execute token transfers or token exchanges while paying for gas fees with tokens instead of ETH.
+- **Main Components**:
+  - `Paymaster`: Manages the fee payment for gas in tokens.
+  - `Bootloader`: Default management contract for Paymaster functionality in zksync.
+  - `AggregationRouter`: Responsible for exchange user tokens for gas fee to ETH.
 
-1. Set up your own zksync fork node. You can follow the instructions given in [era-test-node](https://github.com/matter-labs/era-test-node).
-2. Run your own zksync fork node with port 3050, as it is hardcoded in the zksync provider library
-   ```
-   era_test_node --port 3050 fork mainnet
-   ```
-3. Clone the repository
-   ```
-   git clone https://github.com/1inch/paymaster-zksync.git
-   ```
-4. Install the required dependencies
-   ```
-   yarn install
-   ```
-5. Use one of the rich wallets with some ETH from zksync fork node logs, and set its private key as the `ZKSYNC_PRIVATE_KEY` environment variable. For example, in `.env` file of repo dir.
+## Setup & Deployment
 
-## Running the Tests
-To run the test suite, you can use the following command:
+This repository is designed for demonstration and test purposes and is optimized for use within a ZkSync mainnet fork. However, its applications are not limited to this context.
+
+1. Before you begin, you must be connected to the correct zksync fork node. Detailed instructions can be found at [ZKSync Era Test Node](https://github.com/matter-labs/era-test-node).
+2. Your zksync fork node shoould use port 3050, because it is hardcoded in zksync lib:
+   ```
+   era_test_node --port 3050 fork mainnet 
+   ```
+3. **Rich Wallet:** To run the test, you'll need an address with a good amount of ETH. These addresses can be found in the logs of the era-test-node. Use it in in `process.env.ZKSYNC_PRIVATE_KEY`.
+   ```
+   # Example of .env file in this repo
+   ZKSYNC_PRIVATE_KEY=7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110
+   ```
+
+## Testing
+
+**Test Execution:** 
 ```
-yarn test:fork
+yarn && yarn test:fork
 ```
-Please note that these tests are designed to be run on the zksync, and it is not function correctly if run on the Ethereum mainnet or any else EthereumLike networks.
+   
+**Main Operations:**
+- The test will initialize contracts like `Paymaster`, `AggregationRouter` and various token contracts.
+- Tokens will be bought via MuteSwitch exchange.
+- A token-to-ETH swap will be simulated to cover the fee payment in the paymaster.
+- A main operation of token transfer between two wallets will be conducted.
+- At the end, balances of different wallets and tokens are printed and verified.
 
-## Tests description
-### Test Case Name: should swap and pay gas fees with paymaster
-This test verifies the functionality of the ZKSync Paymaster contract when it is used to pay gas fees in tokens other than ETH. It simulates a real-world scenario where a user wants to pay gas fees using USDC tokens instead of ETH for transfering funds to different wallet.
+## Using Paymaster for Your Purposes
 
-The test follows these steps:
-1. Initializes the test environment by setting up necessary contracts and tokens, and purchases some tokens for the test wallet.
-2. Approves the Paymaster contract to spend a specified amount of USDC tokens from the user's wallet. This amount will be used to cover the transaction fees.
-3. Constructs a token-to-ETH swap operation, which converts a portion of the USDC tokens into ETH. This ETH will be used to pay the gas fees for the transaction. It should be calculated in advance offchain.
-4. Submits the swap operation along with the transaction, embedded as `customData` during the USDC transfer.
-5. Tracks the balances of the involved wallets and contracts before and after the transaction. This includes the user's wallet, the Paymaster contract, and a random receiver account. As a result, a user who sends tokens to a random address does not spend ETH and sends USDC. No more than 10 percent of the transaction fee spents remains on the Paymaster contract.
+You can utilize this Paymaster for any of your needs, not just for transferring tokens from one address to another. Relying on the test, you can build your own calldata for the 1inch AggregationRouter to exchange any tokens for ETH as a transaction fee. The required number of tokens for the exchange should be calculated offchain in advance. Any surplus will be returned to the address in ETH currency.
