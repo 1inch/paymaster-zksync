@@ -32,33 +32,24 @@ jobs:
       - name: Stop era-test-node
         run: docker stop era-test-node
 
-  # coverage:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: zzomrot/zksync-era-test-node-amd64:latest
+  coverage:
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ./.github/actions/setup
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/docker-image-cacher
 
-  #     - name: Start era-test-node
-  #       run: |
-  #         docker run -d --name era-test-node -p 3050:3050 zzomrot/zksync-era-test-node-amd64:latest
-  #         sleep 10
-  #       # run: |
-  #       #   era_test_node --port 3050 fork mainnet &
-  #       #   echo "SCRIPT_PID=$!" >> $GITHUB_ENV  # save process PID
+      - name: Start era-test-node
+        run: |
+          docker run -d --name era-test-node -p 3050:3050 zzomrot/zksync-era-test-node-amd64:latest
+          sleep 10
 
-  #     - run: yarn coverage
-  #       env:
-  #         ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
+      - run: yarn coverage
+        env:
+          ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
 
-  #     - name: Stop era-test-node
-  #       run: docker stop era-test-node
-  #       # run: |
-  #       #   ps -p ${{ env.SCRIPT_PID }}
-  #       #   if ps -p ${{ env.SCRIPT_PID }} > /dev/null; then
-  #       #     kill -9 ${{ env.SCRIPT_PID }}
-  #       #   fi
+      - name: Stop era-test-node
+        run: docker stop era-test-node
 
-  #     - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v3
