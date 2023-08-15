@@ -49,7 +49,7 @@ jobs:
 
       - name: Start era-test-node
         run: |
-          era_test_node --port 3050 fork mainnet > /dev/null &
+          era_test_node --port 3050 fork mainnet &
           echo "SCRIPT_PID=$!" >> $GITHUB_ENV  # save process PID
 
       - run: yarn coverage
