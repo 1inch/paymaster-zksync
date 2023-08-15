@@ -6,7 +6,9 @@ runs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18.15
-        cache: 'yarn'
+
+    - run: npm install -g yarn
+      shell: bash
 
     - run: yarn
       shell: bash
