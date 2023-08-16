@@ -1,6 +1,7 @@
 module.exports = {
     configureYulOptimizer: true,
     solcOptimizerDetails: {
+        constantOptimizer: true,
         yul: true,
         yulDetails: {
             optimizerSteps:

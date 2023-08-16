@@ -6,7 +6,6 @@ require('@nomicfoundation/hardhat-chai-matchers');
 require('dotenv').config();
 require('hardhat-dependency-compiler');
 require('hardhat-deploy');
-// require('hardhat-gas-reporter');
 require('hardhat-tracer');
 require('solidity-coverage');
 

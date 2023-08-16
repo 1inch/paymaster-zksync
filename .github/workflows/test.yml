@@ -32,24 +32,25 @@ jobs:
       - name: Stop era-test-node
         run: docker stop era-test-node
 
-  coverage:
-    runs-on: ubuntu-latest
+  # https://github.com/matter-labs/hardhat-zksync/issues/99
+  # coverage:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
-      - uses: ./.github/actions/docker-image-cacher
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/actions/setup
+  #     - uses: ./.github/actions/docker-image-cacher
 
-      - name: Start era-test-node
-        run: |
-          docker run -d --name era-test-node -p 3050:3050 zzomrot/zksync-era-test-node-amd64:latest
-          sleep 10
+  #     - name: Start era-test-node
+  #       run: |
+  #         docker run -d --name era-test-node -p 3050:3050 zzomrot/zksync-era-test-node-amd64:latest
+  #         sleep 10
 
-      - run: yarn coverage
-        env:
-          ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
+  #     - run: yarn coverage --network zksyncFork
+  #       env:
+  #         ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
 
-      - name: Stop era-test-node
-        run: docker stop era-test-node
+  #     - name: Stop era-test-node
+  #       run: docker stop era-test-node
 
-      - uses: codecov/codecov-action@v3
+  #     - uses: codecov/codecov-action@v3
