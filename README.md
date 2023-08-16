@@ -1,3 +1,8 @@
+<div align="center">
+    <img src=".github/1inch_github_w.svg#gh-light-mode-only">
+    <img src=".github/1inch_github_b.svg#gh-dark-mode-only">
+</div>
+
 # Paymaster ZkSync
 
 [![Build Status](https://github.com/1inch/paymaster-zksync/workflows/CI/badge.svg)](https://github.com/1inch/paymaster-zksync/actions)
