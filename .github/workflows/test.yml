@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
+      - run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/docker-image-cacher
+
+      - name: Start era-test-node
+        run: |
+          docker run -d --name era-test-node -p 8011:8011 zzomrot/zksync-era-test-node-amd64:latest
+          sleep 10
+
+      - run: yarn test:fork
+        env:
+          ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
+          ZKSYNC_WEB3_API_URL: ${{ secrets.ZKSYNC_WEB3_API_URL }}
+
+      - name: Stop era-test-node
+        run: docker stop era-test-node
+
+  # https://github.com/matter-labs/hardhat-zksync/issues/99
+  # coverage:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/actions/setup
+  #     - uses: ./.github/actions/docker-image-cacher
+
+  #     - name: Start era-test-node
+  #       run: |
+  #         docker run -d --name era-test-node -p 8011:8011 zzomrot/zksync-era-test-node-amd64:latest
+  #         sleep 10
+
+  #     - run: yarn coverage --network zksyncFork
+  #       env:
+  #         ZKSYNC_PRIVATE_KEY: ${{ secrets.ZKSYNC_PRIVATE_KEY }}
+
+  #     - name: Stop era-test-node
+  #       run: docker stop era-test-node
+
+  #     - uses: codecov/codecov-action@v3

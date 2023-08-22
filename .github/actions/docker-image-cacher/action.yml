@@ -1,0 +1,28 @@
+name: Docker Image Cacher
+
+runs:
+  using: composite
+  steps:
+    # Cache Docker layers
+    - uses: actions/cache@v2
+      with:
+        path: /tmp/docker-save
+        key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
+
+    # Load Docker image from cache
+    - run: |
+        if [ -f /tmp/docker-save/image.tar ]; then
+          docker load -i /tmp/docker-save/image.tar
+        fi
+      shell: bash
+
+    # Save Docker image
+    - run: |
+        if [ ! -f /tmp/docker-save/image.tar ]; then
+          docker pull zzomrot/zksync-era-test-node-amd64:latest
+          mkdir -p /tmp/docker-save
+          docker save -o /tmp/docker-save/image.tar zzomrot/zksync-era-test-node-amd64:latest
+        fi
+      shell: bash
