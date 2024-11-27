@@ -8,6 +8,7 @@ require('hardhat-dependency-compiler');
 require('hardhat-deploy');
 require('hardhat-tracer');
 require('solidity-coverage');
+require('solidity-docgen');
 
 const { networks, etherscan } = require('./hardhat.networks');
 
@@ -52,5 +53,10 @@ module.exports = {
                 mode: 'z',
             },
         },
+    },
+    docgen: {
+        outputDir: 'docs',
+        pages: 'files',
+        exclude: ['mocks'],
     },
 };

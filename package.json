@@ -40,7 +40,7 @@
     "solc": "0.8.20",
     "solhint": "3.4.1",
     "solidity-coverage": "0.8.4",
-    "solidity-docgen": "0.5.17",
+    "solidity-docgen": "0.6.0-beta.36",
     "zksync-web3": "0.14.3"
   },
   "scripts": {
@@ -48,7 +48,7 @@
     "coverage": "skip_on_coverage=true hardhat coverage",
     "deploy": "hardhat deploy --network",
     "deploy:test": "hardhat deploy",
-    "docify": "npx solidity-utils-docify",
+    "docify": "yarn hardhat docgen",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:fix": "yarn run lint:js:fix && yarn run lint:sol:fix",
     "lint:js": "eslint .",
