@@ -48,7 +48,7 @@
     "coverage": "skip_on_coverage=true hardhat coverage",
     "deploy": "hardhat deploy --network",
     "deploy:test": "hardhat deploy",
-    "docify": "npx solidity-utils-docify",
+    "docify": "yarn hardhat docgen",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:fix": "yarn run lint:js:fix && yarn run lint:sol:fix",
     "lint:js": "eslint .",
