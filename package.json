@@ -11,7 +11,7 @@
     "@1inch/solidity-utils": "2.4.0",
     "@matterlabs/signature-checker": "^1.1.1",
     "@matterlabs/zksync-contracts": "0.6.1",
-    "@openzeppelin/contracts": "4.8.3"
+    "@openzeppelin/contracts": "4.9.6"
   },
   "devDependencies": {
     "@matterlabs/hardhat-zksync-deploy": "0.6.3",
